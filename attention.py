@@ -24,6 +24,8 @@ class AttentionConv(nn.Module):
         self.query_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
         self.value_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
 
+        self.attn_raw = None
+
         self.reset_parameters()
 
     def forward(self, x):
@@ -47,6 +49,7 @@ class AttentionConv(nn.Module):
 
         out = q_out * k_out
         out = F.softmax(out, dim=-1)
+        self.attn_raw = out
         out = torch.einsum('bnchwk,bnchwk -> bnchw', out, v_out).view(batch, -1, height, width)
 
         return out
@@ -80,6 +83,8 @@ class AttentionStem(nn.Module):
         self.query_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
         self.value_conv = nn.ModuleList([nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias) for _ in range(m)])
 
+        self.attn_raw = None
+
         self.reset_parameters()
 
     def forward(self, x):
@@ -112,6 +117,7 @@ class AttentionStem(nn.Module):
 
         out = q_out * k_out
         out = F.softmax(out, dim=-1)
+        self.attn_raw = out
         out = torch.einsum('bnchwk,bnchwk->bnchw', out, v_out).view(batch, -1, height, width)
 
         return out

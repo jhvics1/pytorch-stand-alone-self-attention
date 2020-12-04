@@ -85,6 +85,7 @@ class Model(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.dense = nn.Linear(512 * block.expansion, num_classes)
+        self.num_blocks = num_blocks
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -93,6 +94,75 @@ class Model(nn.Module):
             layers.append(block(self.in_places, planes, stride))
             self.in_places = planes * block.expansion
         return nn.Sequential(*layers)
+
+    def get_attention(self, layer, aggregated=True, norm=True, unpad=True):
+        """Get attention map of an attention layer.
+        `norm` and `unpad` do not matter if `aggregated` is False
+
+        Ref: https://discuss.pytorch.org/t/how-to-unfold-a-tensor-into-sliding-windows-and-then-fold-it-back/55890/7
+
+        Args:
+            layer: attention layer
+            aggregated: whether to aggregate across footprints by folding
+            norm: whether to normalize to eliminate cumulative effect
+            unpad: whether to unpad the attention
+
+        Return:
+            attn: retrived attention map
+        """
+        assert hasattr(layer, 'attn_raw'), 'Layer does not have attention'
+        assert layer.attn_raw is not None, 'Attention not computed yet'
+
+        attn = layer.attn_raw
+        if not aggregated:
+            return attn
+
+        # Prepare the dimension
+        kernel_size = layer.kernel_size
+        stride = layer.stride
+        B, N, C, H, W, K = attn.shape
+        padding = 2 * (kernel_size//2)
+
+        # (B, N, C, H, W, K) -> (B*N*C, K, H*W)
+        attn = attn.reshape([B*N*C, H*W, K]).permute(0, 2, 1)
+
+        # Fold the attenion to aggregate
+        attn = F.fold(attn, (H+padding, W+padding),
+                      kernel_size=kernel_size, stride=stride)
+
+        # (B*N*C, 1, H_pad, W_pad) -> (B, N*C, H_pad, W_pad)
+        attn = attn.reshape([B, N*C, H+padding, W+padding])
+
+        # Normalize the cummulative effect of sliding
+        if norm:
+            norm_mask = F.conv2d(torch.ones(1, 1, H, H),
+                                 torch.ones(1, 1, kernel_size, kernel_size),
+                                 padding=padding).to(attn.device)
+            attn = attn / norm_mask
+
+        # Unpad the attention
+        if unpad:
+            attn = attn[:, :, padding//2:padding//2+H, padding//2:padding//2+W]
+        return attn
+
+    def get_all_attention(self, aggregated=True, norm=True, unpad=True):
+        """Get attention of all layers
+
+        Return:
+            attn_dict: dictionary of attention with the structure:
+                attn_dict[l_name][m_name], where l_name is layer name and
+                m_name is module name
+        """
+        attn_dict = {}
+        for l in range(len(self.num_blocks)):
+            l_name = 'layer{}'.format(l+1)
+            attn_dict[l_name] = {}
+            layer = getattr(self, l_name)
+            for m in range(self.num_blocks[l]):
+                attn = self.get_attention(
+                    layer[m].conv2[0], aggregated, norm, unpad)
+                attn_dict[l_name][str(m)] = attn
+        return attn_dict
 
     def forward(self, x):
         out = self.init(x)
@@ -104,6 +174,7 @@ class Model(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.dense(out)
 
+        # attn_dict = self.get_all_attention()
         return out
 
 

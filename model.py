@@ -185,15 +185,15 @@ class Model(nn.Module):
 
 
 def ResNet26(num_classes=1000, stem=False, dataset='CIFAR10'):
-    return Model(Bottleneck, [1, 2, 4, 1], num_classes=num_classes, stem=stem)
+    return Model(Bottleneck, [1, 2, 4, 1], num_classes=num_classes, stem=stem, dataset=dataset)
 
 
 def ResNet38(num_classes=1000, stem=False, dataset='CIFAR10'):
-    return Model(Bottleneck, [2, 3, 5, 2], num_classes=num_classes, stem=stem)
+    return Model(Bottleneck, [2, 3, 5, 2], num_classes=num_classes, stem=stem, dataset=dataset)
 
 
 def ResNet50(num_classes=1000, stem=False, dataset='CIFAR10'):
-    return Model(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, stem=stem)
+    return Model(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, stem=stem, dataset=dataset)
 
 
 def get_model_parameters(model):

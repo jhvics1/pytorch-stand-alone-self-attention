@@ -1,5 +1,6 @@
-import torch
+import os
 
+import torch
 from torchvision import datasets, transforms
 
 
@@ -94,37 +95,37 @@ def load_data(args):
 
     elif args.dataset == 'IMAGENET':
         # Ref: https://github.com/pytorch/examples/blob/master/imagenet/main.py
-        transform_train = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
-            ),
-        ])
-        transform_test = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
-            ),
-        ])
+        traindir = os.path.join('data', 'ImageNet', 'train')
+        valdir = os.path.join('data', 'ImageNet', 'val')
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+
+        train_dataset = datasets.ImageFolder(
+            traindir,
+            transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+
+        if args.distributed:
+            train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        else:
+            train_sampler = None
 
         train_loader = torch.utils.data.DataLoader(
-            datasets.ImageNet('data/ImageNet', split='train'),
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers,
-        )
+            train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
+            num_workers=args.num_workers, pin_memory=True, sampler=train_sampler)
 
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageNet('data/ImageNet', split='val'),
-            batch_sampler=args.batch_size,
-            shuffle=False,
-            num_workers=args.num_workers,
-        )
+            datasets.ImageFolder(valdir, transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize,
+            ])),
+            batch_size=args.batch_size, shuffle=False,
+            num_workers=args.num_workers, pin_memory=True)
 
     return train_loader, test_loader

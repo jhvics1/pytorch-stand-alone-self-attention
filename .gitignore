@@ -2,3 +2,4 @@ data
 checkpoint
 log
 __pycache__
+.vim

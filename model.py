@@ -49,36 +49,42 @@ class Bottleneck(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=1000, stem=False):
+    def __init__(self, block, num_blocks, dataset, num_classes=1000, stem=False):
         super(Model, self).__init__()
         self.in_places = 64
 
-        if stem:
-            self.init = nn.Sequential(
-                # CIFAR10
-                AttentionStem(in_channels=3, out_channels=64, kernel_size=4, stride=1, padding=2, groups=1),
-                nn.BatchNorm2d(64),
-                nn.ReLU(),
-
-                # For ImageNet
-                # AttentionStem(in_channels=3, out_channels=64, kernel_size=4, stride=1, padding=2, groups=1),
-                # nn.BatchNorm2d(64),
-                # nn.ReLU(),
-                # nn.MaxPool2d(4, 4)
-            )
-        else:
-            self.init = nn.Sequential(
-                # CIFAR10
-                nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.BatchNorm2d(64),
-                nn.ReLU(),
-
-                # For ImageNet
-                # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
-                # nn.BatchNorm2d(64),
-                # nn.ReLU(),
-                # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            )
+        if dataset in ['CIFAR10', 'CIFAR100']:
+            if stem:
+                self.init = nn.Sequential(
+                    # CIFAR10
+                    AttentionStem(in_channels=3, out_channels=64, kernel_size=4, stride=1, padding=2, groups=1),
+                    nn.BatchNorm2d(64),
+                    nn.ReLU(),
+                )
+            else:
+                self.init = nn.Sequential(
+                    # CIFAR10
+                    nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
+                    nn.BatchNorm2d(64),
+                    nn.ReLU(),
+                )
+        elif dataset == 'IMAGENET':
+            if stem:
+                self.init = nn.Sequential(
+                    # For ImageNet
+                    AttentionStem(in_channels=3, out_channels=64, kernel_size=4, stride=1, padding=2, groups=1),
+                    nn.BatchNorm2d(64),
+                    nn.ReLU(),
+                    nn.MaxPool2d(4, 4)
+                )
+            else:
+                self.init = nn.Sequential(
+                    # For ImageNet
+                    nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
+                    nn.BatchNorm2d(64),
+                    nn.ReLU(),
+                    nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+                )
 
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
@@ -178,15 +184,15 @@ class Model(nn.Module):
         return out
 
 
-def ResNet26(num_classes=1000, stem=False):
+def ResNet26(num_classes=1000, stem=False, dataset='CIFAR10'):
     return Model(Bottleneck, [1, 2, 4, 1], num_classes=num_classes, stem=stem)
 
 
-def ResNet38(num_classes=1000, stem=False):
+def ResNet38(num_classes=1000, stem=False, dataset='CIFAR10'):
     return Model(Bottleneck, [2, 3, 5, 2], num_classes=num_classes, stem=stem)
 
 
-def ResNet50(num_classes=1000, stem=False):
+def ResNet50(num_classes=1000, stem=False, dataset='CIFAR10'):
     return Model(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, stem=stem)
 
 

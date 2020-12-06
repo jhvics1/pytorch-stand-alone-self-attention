@@ -22,13 +22,13 @@ def main(args, logger):
     print('img_size: {}, num_classes: {}, stem: {}'.format(args.img_size, num_classes, args.stem))
     if args.model_name == 'ResNet26':
         print('Model Name: {0}'.format(args.model_name))
-        model = ResNet26(num_classes=num_classes, stem=args.stem)
+        model = ResNet26(num_classes=num_classes, stem=args.stem, dataset=args.dataset)
     elif args.model_name == 'ResNet38':
         print('Model Name: {0}'.format(args.model_name))
-        model = ResNet38(num_classes=num_classes, stem=args.stem)
+        model = ResNet38(num_classes=num_classes, stem=args.stem, dataset=args.dataset)
     elif args.model_name == 'ResNet50':
         print('Model Name: {0}'.format(args.model_name))
-        model = ResNet50(num_classes=num_classes, stem=args.stem)
+        model = ResNet50(num_classes=num_classes, stem=args.stem, dataset=args.dataset)
 
     if args.pretrained_model:
         filename = 'best_model_' + str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem) + '_ckpt.tar'

@@ -93,6 +93,38 @@ def load_data(args):
         )
 
     elif args.dataset == 'IMAGENET':
-        pass
+        # Ref: https://github.com/pytorch/examples/blob/master/imagenet/main.py
+        transform_train = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+            ),
+        ])
+        transform_test = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+            ),
+        ])
+
+        train_loader = torch.utils.data.DataLoader(
+            datasets.ImageNet('data/ImageNet', split='train'),
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=args.num_workers,
+        )
+
+        test_loader = torch.utils.data.DataLoader(
+            datasets.ImageNet('data/ImageNet', split='val'),
+            batch_sampler=args.batch_size,
+            shuffle=False,
+            num_workers=args.num_workers,
+        )
 
     return train_loader, test_loader

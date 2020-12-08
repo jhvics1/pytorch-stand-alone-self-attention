@@ -53,7 +53,8 @@ def get_args():
 
     args = parser.parse_args()
 
-    logger = get_logger('train')
+    filename = str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem)
+    logger = get_logger(filename)
     logger.info(vars(args))
 
     return args, logger

@@ -2,6 +2,9 @@ import argparse
 import os
 import logging
 import logging.handlers
+import random
+import numpy as np
+import torch
 
 
 # DEBUG < INFO < WARNING < ERROR < CRITICAL
@@ -42,6 +45,7 @@ def get_args():
     parser.add_argument('--cuda', type=bool, default=True)
     parser.add_argument('--pretrained-model', type=bool, default=False)
     parser.add_argument('--stem', type=bool, default=False, help='attention stem: True, conv: False')
+    parser.add_argument('--seed', type=int, default=123456789)
 
     parser.add_argument('--distributed', type=bool, default=False)
     parser.add_argument('--gpu-devices', type=int, nargs='+', default=None)
@@ -56,5 +60,19 @@ def get_args():
     filename = str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem)
     logger = get_logger(filename)
     logger.info(vars(args))
+    fix_seeds(args.seed)
 
     return args, logger
+
+
+def fix_seeds(seed=0):
+    """Fix random seeds here for pytorch, numpy, and python"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+
+    torch.backends.cudnn.benchmark = True
+    # torch.backends.cudnn.enabled = False

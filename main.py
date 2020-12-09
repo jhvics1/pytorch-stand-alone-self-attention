@@ -62,6 +62,7 @@ def eval(model, test_loader, args):
 
     acc = 100. * float(correct) / len(test_loader.dataset)
     print('Test acc: {0:.2f}'.format(acc))
+    logger.info('Test acc: %.2f' % acc)
     return acc
 
 
@@ -161,7 +162,7 @@ def save_checkpoint(state, is_best, filename):
     torch.save(state, file_path)
     best_file_path = os.path.join('./checkpoint', 'best_' + filename)
     if is_best:
-        print('best Model Saving ...')
+        logger.info('best Model Saving ...')
         shutil.copyfile(file_path, best_file_path)
 
 

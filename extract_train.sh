@@ -2,6 +2,8 @@
 DIR="train"
 for fname in $DIR/*.tar; do
     echo $fname
-    tar xf $fname --directory $DIR
+    dst="${fname/.tar/}"
+    mkdir -p $dst
+    tar xf $fname --directory $dst
     rm $fname
 done

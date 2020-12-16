@@ -90,7 +90,8 @@ class Model(nn.Module):
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.dense = nn.Linear(512 * block.expansion, num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.num_blocks = num_blocks
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -176,9 +177,10 @@ class Model(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
+        # out = F.avg_pool2d(out, 4)
+        out = self.avgpool(out)
         out = out.view(out.size(0), -1)
-        out = self.dense(out)
+        out = self.fc(out)
 
         # attn_dict = self.get_all_attention()
         return out

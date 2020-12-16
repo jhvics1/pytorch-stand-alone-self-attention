@@ -4,5 +4,6 @@ python main.py \
     --model-name ResNet50 \
     --img-size 224 \
     --stem 1 \
+    --num-workers 16 \
     --lr 0.1 \
     --batch-size 128

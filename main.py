@@ -99,7 +99,7 @@ def main(args, logger):
     if args.pretrained_model:
         filename = 'best_model_' + str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem) + '_ckpt.tar'
         print('filename :: ', filename)
-        file_path = os.path.join('./checkpoint', filename)
+        file_path = os.path.join(args.checkpoint_dir, filename)
         checkpoint = torch.load(file_path)
 
         model.load_state_dict(checkpoint['state_dict'])
@@ -130,8 +130,8 @@ def main(args, logger):
         is_best = eval_acc > best_acc
         best_acc = max(eval_acc, best_acc)
 
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
+        if not os.path.isdir(args.checkpoint_dir):
+            os.mkdir(args.checkpoint_dir)
         filename = 'model_' + str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem) + '_ckpt.tar'
         print('filename :: ', filename)
 
@@ -145,7 +145,7 @@ def main(args, logger):
                 'best_acc': best_acc,
                 'optimizer': optimizer.state_dict(),
                 'parameters': parameters,
-            }, is_best, filename)
+            }, is_best, filename, args)
         else:
             save_checkpoint({
                 'epoch': epoch,
@@ -154,13 +154,13 @@ def main(args, logger):
                 'best_acc': best_acc,
                 'optimizer': optimizer.state_dict(),
                 'parameters': parameters,
-            }, is_best, filename)
+            }, is_best, filename, args)
 
 
-def save_checkpoint(state, is_best, filename):
-    file_path = os.path.join('./checkpoint', filename)
+def save_checkpoint(state, is_best, filename, args):
+    file_path = os.path.join(args.checkpoint_dir, filename)
     torch.save(state, file_path)
-    best_file_path = os.path.join('./checkpoint', 'best_' + filename)
+    best_file_path = os.path.join(args.checkpoint_dir, 'best_' + filename)
     if is_best:
         logger.info('best Model Saving ...')
         shutil.copyfile(file_path, best_file_path)

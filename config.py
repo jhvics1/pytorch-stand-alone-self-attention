@@ -5,17 +5,18 @@ import logging.handlers
 import random
 import numpy as np
 import torch
+from datetime import datetime
 
 
 # DEBUG < INFO < WARNING < ERROR < CRITICAL
-def get_logger(filename):
+def get_logger(filename, args):
     logger = logging.getLogger('logger')
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter('[%(levelname)s | %(filename)s:%(lineno)s] %(asctime)s: %(message)s')
 
-    if not os.path.isdir('log'):
-        os.mkdir('log')
+    if not os.path.isdir(args.log_dir):
+        os.mkdir(args.log_dir)
 
     file_handler = logging.FileHandler('./log/' + filename + '.log')
     stream_handler = logging.StreamHandler()
@@ -55,10 +56,29 @@ def get_args():
     parser.add_argument('--dist-backend', type=str, default='nccl')
     parser.add_argument('--dist-url', default='tcp://127.0.0.1:3456', type=str)
 
+    # =========================================================================
+    parser.add_argument(
+        '--log_dir', type=str, default='log',
+    )
+    parser.add_argument(
+        '--checkpoint_dir', type=str, default='checkpoint',
+    )
+    parser.add_argument(
+        '--timestamp', type=str, default='',
+        help='If no timestamp given, will generate automatically. For resuming,'
+             'manually set the correct timestamp',
+    )
+    # =========================================================================
+
     args = parser.parse_args()
 
+    if args.timestamp == '':
+        args.timestamp = datetime.now().strftime('%b%d_%H-%M-%S')
+    args.checkpoint_dir = os.path.join(args.checkpoint_dir, args.timestamp)
+    args.log_dir = os.path.join(args.log_dir, args.timestamp)
+
     filename = str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem)
-    logger = get_logger(filename)
+    logger = get_logger(filename, args)
     logger.info(vars(args))
     fix_seeds(args.seed)
 

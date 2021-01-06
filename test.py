@@ -33,7 +33,7 @@ def main(args, logger):
     if args.pretrained_model:
         filename = 'best_model_' + str(args.dataset) + '_' + str(args.model_name) + '_' + str(args.stem) + '_ckpt.tar'
         print('filename :: ', filename)
-        file_path = os.path.join('./checkpoint', filename)
+        file_path = os.path.join(args.checkpoint_dir, filename)
         checkpoint = torch.load(file_path)
 
         model.load_state_dict(checkpoint['state_dict'])

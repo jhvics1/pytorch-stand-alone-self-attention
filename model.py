@@ -93,6 +93,7 @@ class Model(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.num_blocks = num_blocks
+        self._norm_mask_dict = {}
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -142,9 +143,14 @@ class Model(nn.Module):
 
         # Normalize the cummulative effect of sliding
         if norm:
-            norm_mask = F.conv2d(torch.ones(1, 1, H, H),
-                                 torch.ones(1, 1, kernel_size, kernel_size),
-                                 padding=padding).to(attn.device)
+            if (H, kernel_size) not in self._norm_mask_dict:
+                # Compute norm_mask if not precomputed
+                norm_mask = F.conv2d(torch.ones(1, 1, H, H),
+                                     torch.ones(1, 1, kernel_size, kernel_size),
+                                     padding=padding).to(attn.device)
+                self._norm_mask_dict[(H, kernel_size)] = norm_mask
+            else:
+                norm_mask = self._norm_mask_dict[(H, kernel_size)]
             attn = attn / norm_mask
 
         # Unpad the attention

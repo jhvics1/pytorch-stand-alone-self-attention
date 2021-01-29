@@ -1,5 +1,24 @@
-data
-checkpoint
-log
-__pycache__
-.vim
+# Pycharm
+**/__pycache__/**
+*.pyc
+
+# Log
+/log/**
+!.gitignore
+
+# For Engine Test
+/temps/*.log
+/temps/data
+/temps/model
+
+# IDE
+.idea
+
+# Coverage
+.coverage
+coverage_report
+
+# virtualenv
+.venv
+venv
+
